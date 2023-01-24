@@ -1,3 +1,5 @@
+#CS 470 Project 1
+#William Susa, Mark Chapman, Nicholas Callahan, Reaghan Dougherty, Sydnay Pierce, Abbie Bosko
 from tkinter import *
 from tkinter import ttk
 import random
