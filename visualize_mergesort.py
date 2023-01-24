@@ -9,15 +9,16 @@ _WIDTH_ = 800
 _HEIGHT_ = 600
 
 
-
-def syncArrayWithScreen(top_k):
+def syncArrayWithScreen(top_k, first, second):
+    
     global N
     global array
     global width_bar
     global gap
     
-    #print(f'N is now: {N}')
-  
+    allGrey = True
+    if (first > second):
+        return
     
     temp = array.copy()
     
@@ -29,14 +30,29 @@ def syncArrayWithScreen(top_k):
             canvas.itemconfigure(rectangles[i], fill='green')
         elif (top_k == -1):
             canvas.itemconfigure(rectangles[i], fill='grey')
+        elif (i >= first and i <= second): #in range [first,second]
+            if (i == first):
+                canvas.itemconfigure(rectangles[i], fill='yellow')
+                allGrey=False
+            elif (i == second):
+                canvas.itemconfigure(rectangles[i], fill='red')
+                allGrey=False
+            else:
+                canvas.itemconfigure(rectangles[i], fill='cyan')  
+                allGrey=False
         else:
-            canvas.itemconfigure(rectangles[i],fill='blue')
+            canvas.itemconfigure(rectangles[i],fill='grey')
+
+        
         
         canvas.coords(rectangles[i], x1, 600, x2, 600-val)
         
         canvas.itemconfigure(text_above[i],text=str(val))
         canvas.coords(text_above[i], ((x1+x2)//2,600-val-25))
-        
+    
+    if (allGrey):
+        print(f'Called grey with vals {top_k},{first},{second}')
+    
     #
     fps = fps_slider.get()
     #print(f'fps is now: {fps}')
@@ -44,6 +60,9 @@ def syncArrayWithScreen(top_k):
 
     canvas.update()
     time.sleep(1/fps)
+    
+    
+    
     
 ###
 # regenerate screen for new N value
@@ -93,7 +112,7 @@ def regenArray(new_N):
     canvas.update()
     time.sleep(1/fps)
     
-    syncArrayWithScreen(0)
+    syncArrayWithScreen(0,-1,-1)
 ###
 
 # generate a randomized array of given length
@@ -130,17 +149,17 @@ def merge(numbers, left, middle, right):
     # iterate until one of the sides runs out of items
     while (i <= middle and j <= right):
         
-        syncArrayWithScreen(0)
+        syncArrayWithScreen(0,k,right)
 
         if (temp[i] <= temp[j]):
             numbers[k] = temp[i]
             
-            syncArrayWithScreen(0)
+            syncArrayWithScreen(0,k,left)
             i += 1
         else:
             numbers[k] = temp[j]
             
-            syncArrayWithScreen(0)
+            syncArrayWithScreen(0,k,right)
             j += 1
 
         k += 1
@@ -149,7 +168,7 @@ def merge(numbers, left, middle, right):
     while (i <= middle):
 
         numbers[k] = temp[i]
-        syncArrayWithScreen(0)
+        syncArrayWithScreen(0,k,middle)
         k += 1
         i += 1
 
@@ -158,8 +177,8 @@ def merge(numbers, left, middle, right):
 
         numbers[k] = temp[j]
         
-        syncArrayWithScreen(0)
-        time.sleep(1/60)
+        syncArrayWithScreen(0,k,right)
+        #time.sleep(1/60)
         
         k += 1
         j += 1
@@ -186,9 +205,11 @@ def start():
     
     
     print(f'Call to start() gave {array} and N: {N}')
-    merge_sort(array, 0, N-1)
     
-    syncArrayWithScreen(k)
+    merge_sort(array, 0, N-1)
+    #resulting time 
+    
+    syncArrayWithScreen(k,-1,-1)
     
     canvas.update()
     time.sleep(1/fps)
@@ -207,7 +228,7 @@ def reset():
     N=int(N_slider.get())
     k=int(k_slider.get())
     if (N <= k):
-        #cannot happen
+        #cannot happen 
         return
     
     #syncArrayWithScreen(0)
@@ -217,7 +238,7 @@ def reset():
     #array = generateRandomArray(N)
     
     print(f'Call to reset() gave {array}')
-    syncArrayWithScreen(-1)
+    syncArrayWithScreen(-1,-1,-1)
 
 # ---
 # read in custom data to sort through
@@ -228,11 +249,6 @@ def custom():
     new_win.title("Custom Data Input")
     new_win.geometry("300x300")
     
-    # entry for user input
-    #entry_text = StringVar()
-    #entry = ttk.Entry(new_win, textvariable=entry_text, width=25)
-    #entry.geometry("200x100")
-    #entry.pack()
     
     #entry_text
     text=Text(new_win, height=5, width=25)
@@ -278,6 +294,16 @@ def process_data(data):
     regenArray(N)
     
 
+
+#autorun system
+def autorun():
+    while(True):
+        print("Start of autorun")
+        reset()
+        start()
+        print("Sleeping...")
+        time.sleep(5)
+    
 # ---
 
 win = Tk()
@@ -302,19 +328,19 @@ ttk.Button(win,text='Reset',command=reset).pack(side='left',padx=5)
 #
 ttk.Button(win,text='Custom', command=custom).pack(side='left',padx=5)
 #
-
+ttk.Button(win,text='Auto', command=autorun).pack(side='left',padx=5)
 #----
 
 # Labels and slider to control the speed of sorting (via fps variable)
-fps_label = ttk.Label(win, text="FPS: 60")
+fps_label = ttk.Label(win, text="FPS: 1")
 fps_label.pack(side='left', padx=25)
 
-fps_slider = ttk.Scale(win, from_=5, to=300, orient=HORIZONTAL,
+fps_slider = ttk.Scale(win, from_=1, to=300, orient=HORIZONTAL,
                         length=150, command=lambda x_val: fps_label.config(text=f'FPS: {math.floor(float(x_val))}'))
 
 #label.config(text=str(math.floor(x_val)))
 
-fps_slider.set(60)
+fps_slider.set(1)
 fps_slider.pack(side='left', padx=5)
 
 
@@ -329,7 +355,7 @@ N_label.pack(side='left', padx=15)
 N_slider = ttk.Scale(win, from_=5, to=100, orient=HORIZONTAL,
                         length=100, command=lambda n_val: N_label.config(text=f'N: {math.floor(float(n_val))}'))
 
-#label.config(text=str(math.floor(x_val)))
+
 
 N_slider.set(5)
 N_slider.pack(side='left', padx=5)
@@ -348,7 +374,6 @@ k_label.pack(side='left', padx=15)
 k_slider = ttk.Scale(win, from_=1, to=50, orient=HORIZONTAL,
                         length=100, command=lambda k_val: k_label.config(text=f'k: {math.floor(float(k_val))}'))
 
-#label.config(text=str(math.floor(x_val)))
 
 k_slider.set(3)
 k_slider.pack(side='left', padx=5)
